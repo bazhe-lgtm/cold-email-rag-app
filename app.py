@@ -188,17 +188,18 @@ elif page == "Search":
         value=3
     )
 
-results = collection.query(
-    query_texts=[query],
-    n_results=number_of_results
-)
+    if query:
+        results = collection.query(
+            query_texts=[query],
+            n_results=number_of_results
+        )
 
-st.subheader("Search Results")
+        st.subheader("Search Results")
 
-for i, document in enumerate(results["documents"][0], start=1):
-    st.markdown(f"### Result {i}")
-    st.write(document)
-    st.divider()
+        for i, document in enumerate(results["documents"][0], start=1):
+            st.markdown(f"### Result {i}")
+            st.write(document)
+            st.divider()
 
 
 elif page == "About":
@@ -207,7 +208,6 @@ elif page == "About":
     st.write("""
     This application was built as a Retrieval-Augmented Generation assignment.
     It uses Streamlit for the web interface, LangChain for text processing,
-    HuggingFace sentence-transformer embeddings for semantic representation,
     and ChromaDB as the vector database.
     """)
 
@@ -218,9 +218,8 @@ elif page == "About":
     context for each search result, while the overlap helps prevent important ideas from being cut off.
     """)
 
-    st.subheader("Embedding Model")
+    st.subheader("Embedding / Search Method")
     st.write("""
-    The app uses the all-MiniLM-L6-v2 sentence transformer model. This model creates semantic
-    embeddings that allow the app to find relevant results even when the user's query does not use
-    the exact same words as the source document.
+    The app uses ChromaDB's built-in embedding and similarity search functionality.
+    This allows the app to find relevant results based on meaning rather than only exact keyword matching.
     """)
