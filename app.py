@@ -1,7 +1,7 @@
 import streamlit as st
+import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+
 
 
 st.set_page_config(
@@ -121,21 +121,24 @@ def build_vector_db():
         chunk_overlap=100
     )
 
-    chunks = text_splitter.create_documents(DOCUMENTS)
+    chunks = text_splitter.split_text("\n\n".join(DOCUMENTS))
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    client = chromadb.Client()
+
+    collection = client.get_or_create_collection(
+        name="cold_email_documents"
     )
 
-    vector_db = Chroma.from_documents(
+    ids = [f"chunk_{i}" for i in range(len(chunks))]
+
+    collection.add(
         documents=chunks,
-        embedding=embeddings
+        ids=ids
     )
 
-    return vector_db, chunks
+    return collection, chunks
 
-
-vector_db, chunks = build_vector_db()
+collection, chunks = build_vector_db()
 
 
 st.sidebar.title("Navigation")
@@ -185,15 +188,17 @@ elif page == "Search":
         value=3
     )
 
-    if query:
-        results = vector_db.similarity_search(query, k=number_of_results)
+results = collection.query(
+    query_texts=[query],
+    n_results=number_of_results
+)
 
-        st.subheader("Search Results")
+st.subheader("Search Results")
 
-        for i, result in enumerate(results, start=1):
-            st.markdown(f"### Result {i}")
-            st.write(result.page_content)
-            st.divider()
+for i, document in enumerate(results["documents"][0], start=1):
+    st.markdown(f"### Result {i}")
+    st.write(document)
+    st.divider()
 
 
 elif page == "About":
